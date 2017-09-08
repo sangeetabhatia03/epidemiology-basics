@@ -1,0 +1,65 @@
+---
+output: 
+  pdf_document:
+    citation_package: natbib
+    keep_tex: true
+    fig_caption: true
+    latex_engine: pdflatex
+title: Comaprtment Models 
+author:
+- name: Sangeeta Bhatia
+  affiliation: Imperial College London
+abstract: 
+keywords: 
+date: "Y"
+geometry: margin=1in
+fontfamily: mathpazo
+fontsize: 11pt
+# spacing: double
+bibliography: 
+biblio-style: apsr
+endnote: no
+---
+
+# SIR Model
+```{r}
+library(ggplot2)
+library(magrittr)
+sir <-  function(t, state, params){
+    with(as.list(c(state, params)),{
+    N  <- S + I + R
+    dS <- -beta * S * I/N
+    dI <-  beta * S * I/N - sigma * I
+    dR <-  sigma * I
+    return(list(c(dS, dI, dR)))})
+}
+
+params <- c(sigma = 2, beta = 5)
+at_t_0 <- c(S = 1e5, I = 1, R = 0)
+times  <- 0:40   ## weeks
+out    <- deSolve::ode(y = at_t_0, func = sir, time = times, parms = params)
+as.data.frame(out) %>%
+    reshape2::melt(id.vars = "time") %>%
+    ggplot(aes(time, value, color = variable)) + geom_point()
+
+```
+
+# SIR Model Including Birth and Death
+```{r}
+sir_open <-  function(t, state, params){
+    with(as.list(c(state, params)),{
+    N  <- S + I + R
+    dS <- -beta * S * I/N + B - death * S
+    dI <-  beta * S * I/N - (sigma + death) * I
+    dR <-  sigma * I - death * R
+    return(list(c(dS, dI, dR)))})
+}
+params <- c(death = 0.2, B = 15085, sigma = 12, beta = 4)
+at_t_0 <- c(S = 1e5, I = 1, R = 0)
+times  <- 0:260   ## weeks
+out    <- deSolve::ode(y = at_t_0, func = sir_open, time = times, parms = params)
+as.data.frame(out) %>%
+    reshape2::melt(id.vars = "time") %>%
+    ggplot(aes(time, value, color = variable)) + geom_point()
+
+```
